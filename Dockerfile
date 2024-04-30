@@ -39,13 +39,17 @@ RUN apt-get update -qq \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo "Installing FSL ..." && curl -fsSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fslinstaller.py | python3 - -d /opt/fsl-6.0.7.6 -V 6.0.7.6
-
-
+# Install elastix
+RUN echo "Installing elastix..." && apt-get update && apt-get install -y elastix=4.9.0-2
+# Install SimpleITK
+RUN pip install SimpleITK==2.3.1
 # Set the working directory in the container to /app
 WORKDIR /app
 
 # Add the current directory contents into the container at /app
 ADD . /app
+
+# Create environment with SimpleITK
 
 # Save specification to JSON.
 RUN printf '{ \
