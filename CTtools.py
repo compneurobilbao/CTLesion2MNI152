@@ -16,7 +16,7 @@ from skimage import exposure
 def bone_extracted(ct_img_path):
     """Extract the bone of the CT scan based on the hard thresholding on pixel value"""
     
-    print('The CT scan you want to implement bone extraction: ', ct_img_path)
+    print(('The CT scan you want to implement bone extraction: ', ct_img_path))
 
 
     ct_img = sitk.ReadImage(ct_img_path)
@@ -25,7 +25,7 @@ def bone_extracted(ct_img_path):
 
     output_ct_img = sitk.Image(ct_img.GetWidth(), ct_img.GetHeight(), ct_img.GetDepth(), sitk.sitkFloat32)
 
-    print('The size of CT scan:', ct_img.GetSize())
+    print(('The size of CT scan:', ct_img.GetSize()))
 
     ct_nda = sitk.GetArrayFromImage(ct_img)
 
@@ -62,7 +62,7 @@ def bone_extracted(ct_img_path):
 
     output_ct_image_name = ct_img_path[:ct_img_path.find('.nii.gz')]+'_skull.nii.gz'
     
-    print 'The name of the output skull image: ', output_ct_image_name
+    print('The name of the output skull image: ', output_ct_image_name)
     
     output_ct_image.CopyInformation(ct_img)
     
@@ -193,7 +193,7 @@ def removeCTscandevice(ct_img_path):
     
     ct_nda = sitk.GetArrayFromImage(ct_img)
 
-    print('The CT scan you want to implement CT scan device removal:', ct_img_path)
+    print(('The CT scan you want to implement CT scan device removal:', ct_img_path))
 
     #print 'The minimum value of CT scan: ', np.amin(ct_nda)
 
