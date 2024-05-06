@@ -14,9 +14,11 @@ from scipy import ndimage
 from skimage import exposure
 
 def bone_extracted(ct_img_path):
-    """Extract the bone of the CT scan based on the hard thresholding on pixel value"""
-    
-    print('The CT scan you want to implement bone extraction: ', ct_img_path)
+    """
+    Extract the bone of the CT scan based on the hard thresholding on pixel value
+    """
+
+    print(('The CT scan you want to implement bone extraction: ', ct_img_path))
 
 
     ct_img = sitk.ReadImage(ct_img_path)
@@ -25,7 +27,7 @@ def bone_extracted(ct_img_path):
 
     output_ct_img = sitk.Image(ct_img.GetWidth(), ct_img.GetHeight(), ct_img.GetDepth(), sitk.sitkFloat32)
 
-    print('The size of CT scan:', ct_img.GetSize())
+    print(('The size of CT scan:', ct_img.GetSize()))
 
     ct_nda = sitk.GetArrayFromImage(ct_img)
 
@@ -62,7 +64,7 @@ def bone_extracted(ct_img_path):
 
     output_ct_image_name = ct_img_path[:ct_img_path.find('.nii.gz')]+'_skull.nii.gz'
     
-    print 'The name of the output skull image: ', output_ct_image_name
+    print('The name of the output skull image: ', output_ct_image_name)
     
     output_ct_image.CopyInformation(ct_img)
     
@@ -83,7 +85,8 @@ def bone_extracted(ct_img_path):
 
     #return output_ct_image_name, bone_mask_image_name
 
-def getMaximum3DRegion(binary):
+
+def get_maximum_3d_region(binary):
     """ Get the Maximum 3D region from 3D multiple bindary Regions"""
     
     all_labels = measure.label(binary, background = 0)
@@ -99,9 +102,7 @@ def getMaximum3DRegion(binary):
     return max_binary
 
 
-   
-
-def normalizeCTscan(ct_nda):
+def normalize_ct_scan(ct_nda):
     """Normalize the CT scan to range 0 to 1"""
     if np.amin(ct_nda) < 0:
         ct_normalized_nda = ct_nda - np.amin(ct_nda)
@@ -111,7 +112,7 @@ def normalizeCTscan(ct_nda):
     return ct_normalized_nda
 
 
-def otsuThreshoulding(ct_normalized_nda):
+def otsu_thresholding(ct_normalized_nda):
     """Apply Otsu thresholding on the normalized ranging from 0 to 1 scan"""
     
     thresh = threshold_otsu(ct_normalized_nda)
@@ -119,8 +120,9 @@ def otsuThreshoulding(ct_normalized_nda):
     binary = (ct_normalized_nda > thresh)*1
     
     return binary.astype(np.float32)
-    
-def get2Maximum2DRegions(max_binary):
+
+
+def get_2_maximum_2d_regions(max_binary):
     """Get two largestest 2D region from multiple 2D regions"""
     
     xy_two_largest_binary = np.zeros(max_binary.shape, dtype = np.float32 )
@@ -157,7 +159,7 @@ def get2Maximum2DRegions(max_binary):
             
     return xy_two_largest_binary
 
-def get1Maximum2DRegion(max_second_binary):
+def get_1_maximum_2d_region(max_second_binary):
     """Get the largest 2D region from multiple 2D regions"""
     
     new_binary = np.zeros(max_second_binary.shape, dtype = np.float32)
@@ -176,7 +178,7 @@ def get1Maximum2DRegion(max_second_binary):
     return new_binary
 
 
-def imageOpening2D(max_second_binary, structure=np.ones((15, 15))):
+def image_opening_2d(max_second_binary, structure=np.ones((15, 15))):
     """Applying the image opening operation on the binary mask"""
     new_max_second_binary = np.zeros(max_second_binary.shape, dtype = np.float32)
     
@@ -186,14 +188,14 @@ def imageOpening2D(max_second_binary, structure=np.ones((15, 15))):
         
     return new_max_second_binary
 
-def removeCTscandevice(ct_img_path):
+def remove_ct_scan_device(ct_img_path):
     """remove the ct scan device"""
 
     ct_img = sitk.ReadImage(ct_img_path)
     
     ct_nda = sitk.GetArrayFromImage(ct_img)
 
-    print('The CT scan you want to implement CT scan device removal:', ct_img_path)
+    print(('The CT scan you want to implement CT scan device removal:', ct_img_path))
 
     #print 'The minimum value of CT scan: ', np.amin(ct_nda)
 
@@ -201,21 +203,21 @@ def removeCTscandevice(ct_img_path):
 
     #print 'The pixel ID type of CT scan: ', ct_img.GetPixelIDTypeAsString()
      
-    ct_normalized_nda = normalizeCTscan(ct_nda)
+    ct_normalized_nda = normalize_ct_scan(ct_nda)
     
-    binary = otsuThreshoulding(ct_normalized_nda)
+    binary = otsu_thresholding(ct_normalized_nda)
     
-    max_binary = getMaximum3DRegion(binary)
+    max_binary = get_maximum_3d_region(binary)
     
-    xy_two_largest_binary = get2Maximum2DRegions(max_binary)
+    xy_two_largest_binary = get_2_maximum_2d_regions(max_binary)
     
-    max_second_binary = getMaximum3DRegion(xy_two_largest_binary)
+    max_second_binary = get_maximum_3d_region(xy_two_largest_binary)
     
-    new_binary = get1Maximum2DRegion(max_second_binary)
+    new_binary = get_1_maximum_2d_region(max_second_binary)
     
-    new_max_second_bindary = imageOpening2D(new_binary)
+    new_max_second_bindary = image_opening_2d(new_binary)
     
-    new_max_binary = getMaximum3DRegion(new_max_second_bindary)
+    new_max_binary = get_maximum_3d_region(new_max_second_bindary)
     
     output_ct_image = sitk.GetImageFromArray(ct_nda * new_max_binary)
     
@@ -242,7 +244,7 @@ def removeCTscandevice(ct_img_path):
 
 
 
-def contrastStretch(ct_img_path, percent = (10,90)):
+def contrast_stretch(ct_img_path, percent = (10,90)):
     """Apply the contrast stretching on 2D or 3D image"""
     ct_img = sitk.ReadImage(ct_img_path)
     ct_nda = sitk.GetArrayFromImage(ct_img)
