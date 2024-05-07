@@ -49,7 +49,7 @@ WORKDIR /app
 # Add the current directory contents into the container at /app
 ADD . /app
 
-# Create environment with SimpleITK
+RUN cd /app && pip install -e .
 
 # Save specification to JSON.
 RUN printf '{ \
