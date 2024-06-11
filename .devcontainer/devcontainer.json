@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/anaconda
 {
-	"name": "Compneuro",
+	"name": "CT2MNI_CompNeuro",
 	"build": {
 		"context": "..",
 		"dockerfile": "../Dockerfile"
@@ -40,7 +40,7 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
     // uncomment the following line if you want to install a package in the container
     // through setuptools
-	// "postCreateCommand": "pip3 install -e .",
+	"postCreateCommand": "pip3 install -U uv && uv venv .venv && source .venv/bin/activate && uv pip install -e .",
 
 	// Configure tool-specific properties.
 	// "customizations": {},

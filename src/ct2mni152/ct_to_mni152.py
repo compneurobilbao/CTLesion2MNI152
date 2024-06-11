@@ -30,6 +30,10 @@ def setup():
                             metavar="DIR",
                             help="Path to save the results folder.",
                             required=True)
+    arg_parser.add_argument("-nL", "--no_lesion_path",
+                            metavar="DIR",
+                            help="Path to the no lesion mask.",
+                            required=True)
     # Parse arguments
     args = arg_parser.parse_args()
     
@@ -59,6 +63,7 @@ def main():
     args = setup()
 
     ct_scan_path = args.ct_scan_path
+    no_lesion_path = args.no_lesion_path
     affine_matrix_name = ct_scan_path[:ct_scan_path.find(".nii.gz")]+"_affine.mat"
 
     # if you want to do ct scan removal 
@@ -103,6 +108,7 @@ def main():
     call(["elastix",
           "-m", ct_scan_wodevice_contrast_stretching[:ct_scan_wodevice_contrast_stretching.find(".nii.gz")]+"_MNI152.nii.gz",
           "-f", MNI152_T1_PATH,
+          "-mMask", no_lesion_path,
           "-out", os.path.dirname(ct_scan_path),
           "-p", BSPLINE_PATH])
 
