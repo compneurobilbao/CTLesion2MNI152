@@ -49,8 +49,6 @@ WORKDIR /app
 # Add the current directory contents into the container at /app
 ADD . /app
 
-RUN cd /app && pip install -e .
-
 # Save specification to JSON.
 RUN printf '{ \
   "pkg_manager": "apt", \
