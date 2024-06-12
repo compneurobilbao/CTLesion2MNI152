@@ -1,2 +1,6 @@
 *.pyc
+.history
+.vscode
+.venv
+old
 

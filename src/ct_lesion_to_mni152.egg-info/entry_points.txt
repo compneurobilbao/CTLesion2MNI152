@@ -1,0 +1,2 @@
+[console_scripts]
+ct_lesion_to_mni152 = ct_lesion_to_mni152.registration_workflow:main

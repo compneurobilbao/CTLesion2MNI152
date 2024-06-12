@@ -1,0 +1,16 @@
+.gitignore
+Dockerfile
+LICENSE
+README.md
+Register Brain CT images to MRI images.pdf
+pyproject.toml
+.devcontainer/devcontainer.json
+src/ct_lesion_to_mni152/ct_tools.py
+src/ct_lesion_to_mni152/registration_workflow.py
+src/ct_lesion_to_mni152.egg-info/PKG-INFO
+src/ct_lesion_to_mni152.egg-info/SOURCES.txt
+src/ct_lesion_to_mni152.egg-info/dependency_links.txt
+src/ct_lesion_to_mni152.egg-info/entry_points.txt
+src/ct_lesion_to_mni152.egg-info/requires.txt
+src/ct_lesion_to_mni152.egg-info/top_level.txt
+src/ct_lesion_to_mni152/data/__init__.py

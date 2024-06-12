@@ -3,12 +3,15 @@ from subprocess import call
 import sys
 import argparse
 
-import ct2mni152.ct_tools as ct_tools
-import ct2mni152.data as data
+import itk
+
+import ct_lesion_to_mni152.ct_tools as ct_tools
+import ct_lesion_to_mni152.data as data
 
 HELP_MESSAGE = ("Usage:\n"
                "ct2mni152 -p <CT_SCAN_PATH> "
                "-o <OUTPUT_PATH> "
+               "-l <LESION_MASK_PATH> "
                "[-sdr <SCAN_DEVICE_REMOVAL>(Default: True)]")
 
 
@@ -115,5 +118,9 @@ def register_ct_and_lesion_to_mni152() -> None:
           "-p", BSPLINE_PATH])
 
 
-if __name__ == "__main__":
+def main() -> None:
     register_ct_and_lesion_to_mni152()
+
+
+if __name__ == "__main__":
+    main()

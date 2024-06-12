@@ -1,34 +1,38 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = [
+    "setuptools >= 66",
+    "wheel",
+    "setuptools_scm >= 6.4",
+]
 
-[tool.poetry]
-name = "ct2mni152"
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ct_lesion_to_mni152"
+requires-python = ">=3.9"
 version = "0.0.1"
-description = "AgeML is a Python package for Age Modelling with Machine Learning made easy."
-authors = ["Po-Yu Kao", "Iñigo Tellaetxe Elorriaga"]
-readme = "README.md"
-repository = "https://github.com/itellaetxe/ct2mni152"
-license = "MIT"
-classifiers = ["Topic :: Software Development :: Libraries :: Python Modules"]
-packages = [{include = "ct2mni152", from = "src"}]
+authors = [
+    {name = "Iñigo Tellaetxe Elorriaga"}, {email = "inigotellaetxe@gmail.com"},
+    {name = "Antonio Jimenez-Marin"}, {email = "antoniojm.compneuro@gmail.com"}	
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+dependencies = [
+    # common dependencies
+    "importlib-metadata == 7.1.0",
+    "numpy == 1.26.4",
+    "scikit-image == 0.22.0",
+    "SimpleITK == 2.3.1",
+    "scipy > 1.9.0",
+    "itk == 5.4.0",
+    "itk-elastix == 0.20.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9, <3.13"
-numpy = "^1.24"
-scikit-image = "^0.22.0"
-SimpleITK = "^2.3.0"
-scipy = "^1.9.0"
-
-
-[tool.poetry.dev-dependencies]
-# Linting
-flake8 = "*"
-flake8-bugbear = "*"
-flake8-broken-line = "*"
-flake8-comprehensions = "*"
-
-[tool.poetry.scripts]
-ct2mni152 = "ct2mni152.main:main"
+[project.scripts]
+ct_lesion_to_mni152 = "ct_lesion_to_mni152.registration_workflow:main"
 
 

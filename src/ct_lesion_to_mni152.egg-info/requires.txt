@@ -1,0 +1,7 @@
+importlib-metadata==7.1.0
+numpy==1.26.4
+scikit-image==0.22.0
+SimpleITK==2.3.1
+scipy>1.9.0
+itk==5.4.0
+itk-elastix==0.20.0

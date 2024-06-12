@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: ct_lesion_to_mni152
+Version: 0.0.1
+Author: Iñigo Tellaetxe Elorriaga, Antonio Jimenez-Marin
+Author-email: inigotellaetxe@gmail.com, antoniojm.compneuro@gmail.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Medical Science Apps.
+Requires-Python: >=3.9
+License-File: LICENSE
+Requires-Dist: importlib-metadata==7.1.0
+Requires-Dist: numpy==1.26.4
+Requires-Dist: scikit-image==0.22.0
+Requires-Dist: SimpleITK==2.3.1
+Requires-Dist: scipy>1.9.0
+Requires-Dist: itk==5.4.0
+Requires-Dist: itk-elastix==0.20.0
