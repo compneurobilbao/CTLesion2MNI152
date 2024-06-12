@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/anaconda
 {
-	"name": "CT2MNI_CompNeuro",
+	"name": "CT_lesion_2_MNI152_CompNeuro",
 	"build": {
 		"context": "..",
 		"dockerfile": "../Dockerfile"
@@ -14,16 +14,16 @@
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "ms-toolsai.jupyter",
-                "ms-python.black-formatter"
+                "charliermarsh.ruff"
             ],
 
             "settings": {
-                "python.defaultInterpreterPath": "/app/.venv/bin/python",
-                "jupyter.notebookKernel": "/app/.venv/bin/python",
+                "python.defaultInterpreterPath": "{workspaceFolder}/.venv/bin/python",
+                "jupyter.notebookKernel": "{workspaceFolder}/.venv/bin/python",
                 "python.analysis.typeCheckingMode": "basic",
                 "python.formatting.provider": "none",
                 "[python]": {
-                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.defaultFormatter": "charliermarsh.ruff",
                     "editor.formatOnSave": true
                   }
             }
