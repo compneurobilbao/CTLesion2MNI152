@@ -21,15 +21,19 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
+
 dependencies = [
     # common dependencies
     "importlib-metadata == 7.1.0",
     "numpy == 1.26.4",
     "scikit-image == 0.22.0",
-    "SimpleITK == 2.3.1",
     "scipy > 1.9.0",
+    "pandas == 2.2.2",
     "itk == 5.4.0",
     "itk-elastix == 0.20.0",
+    "nibabel == 5.2.1",
+    "nilearn == 0.10.4",
+    "matplotlib == 3.9.1",
 ]
 
 [project.scripts]

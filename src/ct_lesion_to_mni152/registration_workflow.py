@@ -2,10 +2,8 @@ import os
 from subprocess import call
 import sys
 import argparse
-
+import numpy as np
 import itk
-
-import ct_lesion_to_mni152.ct_tools as ct_tools
 import ct_lesion_to_mni152.data as data
 
 HELP_MESSAGE = (
@@ -13,7 +11,6 @@ HELP_MESSAGE = (
     "ct2mni152 -p <CT_SCAN_PATH> "
     "-o <OUTPUT_PATH> "
     "-l <LESION_MASK_PATH> "
-    "[-sdr <SCAN_DEVICE_REMOVAL>(Default: True)]"
 )
 
 
@@ -31,12 +28,6 @@ def arg_setup() -> argparse.Namespace:
         metavar="DIR",
         required=True,
         help="Path to the CT scan.",
-    )
-    arg_parser.add_argument(
-        "-sdr",
-        "--scan_device_removal",
-        default=True,
-        help="Whether CT scan device removal is desired. Default is False.",
     )
     arg_parser.add_argument(
         "-o",
@@ -64,10 +55,6 @@ def arg_setup() -> argparse.Namespace:
         raise ValueError(
             f"Output path does not exist. (Could not find: {args.output_path})"
         )
-    if args.scan_device_removal not in ["True", "False"]:
-        raise ValueError(
-            "Scan device removal must be a boolean. Write 'True' or 'False'."
-        )
 
     return args
 
@@ -81,6 +68,7 @@ def register_ct_and_lesion_to_mni152() -> None:
     # Global Variable Definition
     MNI152_BONE_PATH = data.MNI152_BONE_PATH
     MNI152_T1_PATH = data.MNI152_T1_PATH
+    MNI152_BRAIN_PATH = data.MNI152_BRAIN_PATH
     BSPLINE_PATH = data.BSPLINE_PATH
     print(("Location of MNI152 bone image:", MNI152_BONE_PATH))
 
@@ -96,31 +84,52 @@ def register_ct_and_lesion_to_mni152() -> None:
         args.output_path,
         os.path.basename(ct_scan_name + "_affine.mat"),
     )
-
-    # If you want to do ct scan removal
-    if "scan_device_removal" in vars(args):
-        ct_scan_no_device_path = ct_tools.remove_ct_scan_device(
-            ct_img_path=ct_scan_path,
-            output_dir=args.output_path,
-            output_name=ct_scan_name + "_no_device.nii.gz",
-        )
-    else:
-        ct_scan_no_device_path = ct_scan_path
-
-    # Extract skull from CT scan
-    ct_scan_no_device_skull_path = ct_tools.extract_skull(
-        ct_img_path=ct_scan_no_device_path,
-        output_dir=args.output_path,
-        output_name=ct_scan_name + "_skull.nii.gz",
+    print(ct_scan_path)
+    call(
+        [
+        "fsl-cluster",
+        "--in=" + ct_scan_path,
+        "--thresh=100",
+        "--no_table",
+        "--minextent=100000",
+        "--oindex=" + os.path.join(args.output_path, ct_scan_name + "_skull_clusters.nii.gz"),
+        "--osize=" + os.path.join(args.output_path, ct_scan_name + "_skull_cluster_sizes.nii.gz"),
+        ]
     )
-
+    skull_cluster_size = np.max(itk.array_from_image(itk.imread(os.path.join(args.output_path, ct_scan_name + "_skull_cluster_sizes.nii.gz"), itk.F)).flatten())
+    call([
+        "fslmaths",
+        os.path.join(args.output_path, ct_scan_name + "_skull_cluster_sizes.nii.gz"),
+        "-thr",
+        str(skull_cluster_size),
+        "-uthr",
+        str(skull_cluster_size),
+        "-bin",
+        os.path.join(args.output_path, ct_scan_name + "_skull_mask.nii.gz"),
+    ])
+    call([
+        "fslmaths",
+        ct_scan_path,
+        "-mas",
+        os.path.join(args.output_path, ct_scan_name + "_skull_mask.nii.gz"),
+        os.path.join(args.output_path, ct_scan_name + "_skull.nii.gz"),
+    ])
+    call([
+        "fslmaths",
+        ct_scan_path,
+        "-thr",
+        str(0),
+        "-uthr",
+        str(100),
+        os.path.join(args.output_path, ct_scan_name + "_HU.nii.gz"),
+    ])
     # Register bone from CT scan to MNI152-bone.
     # Compute registration Affine
     call(
         [
             "flirt",
             "-in",
-            ct_scan_no_device_skull_path,
+            os.path.join(args.output_path, ct_scan_name + "_skull.nii.gz"),
             "-ref",
             MNI152_BONE_PATH,
             "-omat",
@@ -142,54 +151,45 @@ def register_ct_and_lesion_to_mni152() -> None:
             "trilinear",
         ]
     )
-    # Apply registration Affine
-    ct_scan_no_device_pre_mni_path = os.path.join(
-        args.output_path, ct_scan_name + "_pre_mni_no_device.nii.gz"
+
+    ct_HU = os.path.join(
+        args.output_path, f"{ct_scan_name}_HU.nii.gz"
     )
+
     call(
         [
-            "flirt",
-            "-in",
-            ct_scan_no_device_path,
-            "-ref",
-            MNI152_T1_PATH,
-            "-applyxfm",
-            "-init",
-            affine_matrix_path,
-            "-out",
-            ct_scan_no_device_pre_mni_path,
+            "fslmaths",
+            ct_scan_path,
+            "-thr",
+            "0", 
+            "-uthr", 
+            "100",
+            ct_HU,
         ]
     )
-
-    # Perform contrast stretching in the ct scan without device in subj space
-    ct_scan_no_device_contrast_stretching_path = ct_tools.contrast_stretch(
-        ct_img_path=ct_scan_no_device_path,
-        output_dir=args.output_path,
-        output_name=ct_scan_name + "_contrast_stretching.nii.gz",
-    )
-
+    
     # Deformable Registration (output path)
-    ct_pre_mni_contrast_stretched_path = os.path.join(
-        args.output_path, f"{ct_scan_name}_pre_mni_contrast_stretched.nii.gz"
+    ct_pre_mni = os.path.join(
+        args.output_path, f"{ct_scan_name}_pre_mni.nii.gz"
     )
 
     call(
         [
             "flirt",
             "-in",
-            ct_scan_no_device_contrast_stretching_path,
+            ct_HU,
             "-ref",
             MNI152_T1_PATH,
             "-applyxfm",
             "-init",
             affine_matrix_path,
             "-out",
-            ct_pre_mni_contrast_stretched_path,
+            ct_pre_mni,
         ]
     )
 
     # Applies affine transform generated between subject space skull and MNI152 skull to the lesion mask
-    lesion_pre_mni_fname = os.path.join(
+    lesion_pre_mni = os.path.join(
         args.output_path, f"{lesion_name}_pre_mni.nii.gz"
     )
     call(
@@ -205,31 +205,27 @@ def register_ct_and_lesion_to_mni152() -> None:
             "-interp",
             "nearestneighbour",
             "-out",
-            lesion_pre_mni_fname,
+            lesion_pre_mni,
         ]
     )
-
-    # Make a mask of the CT scan registered rigidly (preMNI) without the lesion mask
-    ct_no_lesion_mask_fname = os.path.join(
-        args.output_path, "ct_mask_no_lesion_pre_mni.nii.gz"
+    nolesion_pre_mni = os.path.join(
+        args.output_path, f"no_{lesion_name}_pre_mni.nii.gz"
     )
-
     call(
         [
             "fslmaths",
-            ct_pre_mni_contrast_stretched_path,
+            ct_pre_mni,
             "-bin",
             "-sub",
-            lesion_pre_mni_fname,
-            ct_no_lesion_mask_fname,
+            lesion_pre_mni,
+            nolesion_pre_mni,
         ]
     )
-
     # Load images with ITK
-    no_lesion_mask_im = itk.imread(ct_no_lesion_mask_fname, itk.UC)
-    ct_pre_mni_im = itk.imread(ct_pre_mni_contrast_stretched_path, itk.F)
-    mni_template_im = itk.imread(MNI152_T1_PATH, itk.F)
-    lesion_mask_pre_mni_im = itk.imread(lesion_pre_mni_fname, itk.F)
+    no_lesion_mask_im = itk.imread(nolesion_pre_mni, itk.UC)
+    ct_pre_mni_im = itk.imread(ct_pre_mni, itk.F)
+    mni_template_im = itk.imread(MNI152_BRAIN_PATH, itk.F)
+    lesion_mask_pre_mni_im = itk.imread(lesion_pre_mni, itk.F)
 
     # Load BSpline parameter object
     transform_param_object = itk.ParameterObject.New()
@@ -267,7 +263,6 @@ def register_ct_and_lesion_to_mni152() -> None:
         lesion_name + "_MNI152.nii.gz",
     )
     itk.imwrite(lesion_registered_mni152, lesion_mni15_fname)
-
 
 def main() -> None:
     register_ct_and_lesion_to_mni152()

@@ -4,7 +4,7 @@
 	"name": "CT_lesion_2_MNI152_CompNeuro",
 	"build": {
 		"context": "..",
-		"dockerfile": "../Dockerfile"
+		"dockerfile": "./Dockerfile"
 	},
 
 	"customizations": {
@@ -18,8 +18,8 @@
             ],
 
             "settings": {
-                "python.defaultInterpreterPath": "{workspaceFolder}/.venv/bin/python",
-                "jupyter.notebookKernel": "{workspaceFolder}/.venv/bin/python",
+                "python.defaultInterpreterPath": "/opt/fsl-6.0.7.6/bin/python",
+                "jupyter.notebookKernel": "/opt/fsl-6.0.7.6/bin/python",
                 "python.analysis.typeCheckingMode": "basic",
                 "python.formatting.provider": "none",
                 "[python]": {
@@ -40,7 +40,6 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
     // uncomment the following line if you want to install a package in the container
     // through setuptools
-	"postCreateCommand": "pip3 install -U uv && uv venv .venv && . .venv/bin/activate && uv pip install -e .",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
