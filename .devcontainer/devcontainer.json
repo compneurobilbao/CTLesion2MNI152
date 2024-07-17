@@ -2,11 +2,7 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/anaconda
 {
 	"name": "CT_lesion_2_MNI152_CompNeuro",
-	"build": {
-		"context": "..",
-		"dockerfile": "./Dockerfile"
-	},
-
+    "image": "compneurobilbaolab/ct_lesion_to_mni152:1.0",
 	"customizations": {
         "vscode": {
             "extensions": [
