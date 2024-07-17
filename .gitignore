@@ -2,4 +2,4 @@
 .history
 .vscode
 .venv
-data
+./data
