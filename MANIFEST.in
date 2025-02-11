@@ -1,3 +1,4 @@
 include LICENSE.txt
 include README.md
 recursive-include src/ct_lesion_to_mni152/data *
+recursive-include src/ventricle_removal/data *

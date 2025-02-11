@@ -38,5 +38,5 @@ dependencies = [
 
 [project.scripts]
 ct_lesion_to_mni152 = "ct_lesion_to_mni152.registration_workflow:main"
-
+ventricle_removal = "ventricle_removal.v_removal_workflow:main"
 
