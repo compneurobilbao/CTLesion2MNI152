@@ -74,10 +74,10 @@ def main() -> None:
             age_range_selected = "85-89"
             break
     ventricle_mask = nib.load(os.path.join(data.VENTRICLES_PATH, f"{age_range_selected}_ventricles_MNI152.nii.gz"))
-    les_mask_mni = nib.load(os.path.join(args.project_path, args.sub_name, "ct", "lesion_mask_MNI152.nii.gz"))
+    les_mask_mni = nib.load(os.path.join(args.project_path, args.sub_name, "ct", args.sub_name + "_ct_lesion_mask_MNI152.nii.gz"))
     les_mask_mni_novent = les_mask_mni.get_fdata() - ventricle_mask.get_fdata()
     les_mask_mni_novent_bin = nib.Nifti1Image((les_mask_mni_novent > 0).astype(np.int16), les_mask_mni.affine)
-    nib.save(les_mask_mni_novent_bin, os.path.join(args.project_path, args.sub_name, "ct", "lesion_mask_mni_novent.nii.gz"))
+    nib.save(les_mask_mni_novent_bin, os.path.join(args.project_path, args.sub_name, "ct", args.sub_name + "_ct_lesion_mask_MNI152_novent.nii.gz"))
 
 
 
