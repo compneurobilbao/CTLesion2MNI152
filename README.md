@@ -7,7 +7,7 @@ We used the tool [CT2MNI152](https://github.com/pykao/CT2MNI152) as reference co
 
 ## How to install `CTLesion2MNI152`
 
-For running the code is recommended to use [docker](https://www.docker.com/) and it is not necessary to install the anything else. 
+For running the code it is recommended to use [docker](https://www.docker.com/) and it is not necessary to install anything else. 
 
 But it is possible to install the package if [fsl](https://fsl.fmrib.ox.ac.uk/fsl/docs/#/) is already installed in your computer. For doing this, run in your terminal `git clone https://github.com/compneurobilbao/CTLesion2MNI152.git` Then `cd` into the `CTLesion2MNI152` folder, and `pip install .`
 
@@ -26,13 +26,13 @@ participants.tsv
 
 There are two main CLIs:
 
-* **ct_lesion_to_mni152**: perform the registration of the CT lesion mask, to the MNI152 template. For running it execute:
+* **ct_lesion_to_mni152**: it performs the registration of the CT lesion mask to the MNI152 template. For running it execute:
 ```
 docker run -v /path/to/your/project/:/project -it compneurobilbaolab/ct_lesion_to_mni152:1.1 ct_lesion_to_mni152 -p /project/sub-XXX/ct/sub-XXX_ct.nii.gz -l /project/sub-XXX/ct/sub-XXX_ct_lesion_mask.nii.gz -o /project/sub-XXX/ct
 
 ```
 
-* **ventricle_removal** (*optional*): remove the overlap with the ventricles depending on the age of the participant. Is optional, but recommended if the lesion is near the ventricles. For running it execute:
+* **ventricle_removal** (*optional*): remove the overlap with the ventricles depending on the age of the participant. It is optional, but recommended if the lesion is near the ventricles. For running it execute:
 
 ```
 docker run -v /path/to/your/project/:/project -it compneurobilbaolab/ct_lesion_to_mni152:1.1 ventricle_removal -p /project/ -s sub-XXX
