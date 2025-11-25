@@ -44,10 +44,11 @@ docker run -v /path/to/your/project/:/project -it compneurobilbaolab/ct_lesion_t
 * `sub-XXX_ct_lesion_mask_MNI152.nii.gz` the lesion mask in MNI152 template.
 * `sub-XXX_ct_lesion_mask_MNI152_novent.nii.gz` the lesion mask in MNI152 template after ventricle removal.
 
-## Reference paper: 
+## Cite
+
+Antonio Jimenez-Marin, Silke Boulanger, Iñigo Tellaetxe-Elorriaga, Iñaki Escudero, Ivan Gil De Sousa, Marimar Freijo, Pedro I Tejada, Asier Erramuzpe, Jesus M. Cortes. COGNET-STROKE: A NOVEL BRAIN DYSCONNECTIVITY TOOL FOR PREDICTION OF COGNITIVE DEFICITS AFTER STROKE. MedRxiv. 2025. [https://doi.org/10.1101/2023.08.04.551953](https://doi.org/10.1101/2025.08.13.25333589)
 
 Kuijf, Hugo J., et al. "[Registration of brain CT images to an MRI template for the purpose of lesion-symptom mapping.](https://link.springer.com/content/pdf/10.1007%2F978-3-319-02126-3_12.pdf)" International Workshop on Multimodal Brain Image Analysis. Springer, Cham, 2013.
-
 
 # LICENSE
 
