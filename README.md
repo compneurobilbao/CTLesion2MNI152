@@ -5,6 +5,8 @@ Lesion Network Mapping (LNM) is a technique used to infer brain network disconne
 
 We used the tool [CT2MNI152](https://github.com/pykao/CT2MNI152) as reference code, but modifying some features for simplifying and boosting the registration of the lesion segmented. Additionally, we added a second tool for removing the ventricles based on the age of the participant, because participants could be elder and the MNI152 is based on young participants, who have smaller ventricles.
 
+The CT template used for registration is derived from the [High Resolution CT Template](https://github.com/muschellij2/high_res_ct_template) described by Muschelli (2020), transformed to the MNI152 1 mm space using the transform distributed with that template.
+
 ## How to install `CTLesion2MNI152`
 
 For running the code it is recommended to use [docker](https://www.docker.com/) and it is not necessary to install anything else. 
@@ -48,7 +50,11 @@ docker run -v /path/to/your/project/:/project -it compneurobilbaolab/ct_lesion_t
 
 Antonio Jimenez-Marin, Silke Boulanger, Iñigo Tellaetxe-Elorriaga, Iñaki Escudero, Ivan Gil De Sousa, Marimar Freijo, Pedro I Tejada, Asier Erramuzpe, Jesus M. Cortes. COGNET-STROKE: A NOVEL BRAIN DYSCONNECTIVITY TOOL FOR PREDICTION OF COGNITIVE DEFICITS AFTER STROKE. MedRxiv. 2025. [https://doi.org/10.1101/2023.08.04.551953](https://doi.org/10.1101/2025.08.13.25333589)
 
-Kuijf, Hugo J., et al. "[Registration of brain CT images to an MRI template for the purpose of lesion-symptom mapping.](https://link.springer.com/content/pdf/10.1007%2F978-3-319-02126-3_12.pdf)" International Workshop on Multimodal Brain Image Analysis. Springer, Cham, 2013.
+## References
+
+Kuijf, Hugo J., et al. "[Registration of brain CT images to an MRI template for the purpose of lesion-symptom mapping.](https://doi.org/10.1007/978-3-319-02126-3_12)" International Workshop on Multimodal Brain Image Analysis. Springer, Cham, 2013.
+
+Muschelli, John. "[A Publicly Available, High Resolution, Unbiased CT Brain Template.](https://doi.org/10.1007/978-3-030-50153-2_27)" International Conference on Information Processing and Management of Uncertainty in Knowledge-Based Systems, pp. 358–366. Springer, Cham, 2020.
 
 # LICENSE
 
