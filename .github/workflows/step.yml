@@ -1,0 +1,108 @@
+name: Step
+
+# Contract step wrapper (card F0-23): unit tests, image build, reference-dataset test under
+# Docker with outputs validated by the contract validator. The SDK, the contract files and the
+# synthetic fixtures come from the public stroke-server repository at the commit pinned in
+# step/ci/STROKE_SERVER_SHA.
+
+on:
+  pull_request:
+    paths: ["step/**", "src/**", "pyproject.toml", ".github/workflows/step.yml"]
+  push:
+    branches: [master]
+    paths: ["step/**", "src/**", "pyproject.toml", ".github/workflows/step.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: step-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ct-lesion-to-mni152-step:ci
+
+jobs:
+  unit:
+    name: Wrapper unit tests and manifest validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.11"
+      - name: Fetch pinned contract files and SDK
+        run: step/ci/fetch_pinned.sh "$RUNNER_TEMP/pinned"
+      - name: Install
+        run: |
+          pip install numpy==1.26.4 nibabel==5.2.1 scipy==1.13.1 PyYAML==6.0.2 jsonschema==4.23.0 pytest==8.3.3
+          pip install --no-deps "$RUNNER_TEMP/pinned/steps/sdk"
+      - name: Manifest is valid
+        run: python "$RUNNER_TEMP/pinned/contracts/validate.py" --kind step step/step.yaml
+      - name: Tests
+        env:
+          STEP_CONTRACTS_DIR: ${{ runner.temp }}/pinned/contracts
+        run: python -m pytest step/tests -q
+
+  container:
+    name: Reference test under Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.11"
+      - name: Fetch pinned contract files, SDK and fixtures
+        run: step/ci/fetch_pinned.sh "$RUNNER_TEMP/pinned"
+      - name: Install SDK on the host (reference-test runner and validator)
+        run: |
+          pip install numpy==1.26.4 nibabel==5.2.1 PyYAML==6.0.2 jsonschema==4.23.0
+          pip install --no-deps "$RUNNER_TEMP/pinned/steps/sdk"
+          echo "STEP_CONTRACTS_DIR=$RUNNER_TEMP/pinned/contracts" >> "$GITHUB_ENV"
+      - name: Stage the reference dataset (fixture case-01)
+        run: step/ci/stage_reference.sh "$RUNNER_TEMP/pinned" case-01
+
+      - name: Build the step image
+        run: docker build -f step/Dockerfile --build-arg STROKE_SERVER_SHA="$(cat step/ci/STROKE_SERVER_SHA)" -t "$IMAGE" .
+
+      - name: Image checks
+        run: |
+          docker run --rm --entrypoint /bin/sh "$IMAGE" -c '
+            set -eu
+            test -x /usr/local/bin/run
+            test -r /opt/step/step.yaml
+            for d in /in /out /ref /tmp; do test -d "$d"; test -z "$(ls -A "$d")"; done
+            test -z "$(find /opt/step /usr/local/bin/run -not -perm -o=r)"
+          '
+          docker run --rm --entrypoint cat "$IMAGE" /opt/step/step.yaml | cmp - step/step.yaml
+
+      - name: Reference test (fixture case-01, contract section 6 flags)
+        id: reftest
+        run: |
+          mkdir -p artifacts
+          set +e
+          stroke-step-reftest --step-dir step --mode docker --image "$IMAGE" \
+            --workdir "$RUNNER_TEMP/docker-run" --save-provenance artifacts/provenance-case-01.json
+          code=$?
+          set -e
+          echo "reftest exit code: $code"
+          ls -la "$RUNNER_TEMP/docker-run/out" || true
+          cp "$RUNNER_TEMP/docker-run/out/error.json" artifacts/error-case-01.json 2>/dev/null || true
+          if [ -f "$RUNNER_TEMP/docker-run/out/lesion_mask_mni.nii.gz" ]; then
+            python step/tests/report_dice.py "$RUNNER_TEMP/docker-run/out" step/tests/reference/lesion_mask_mni.nii.gz | tee artifacts/dice-case-01.json
+          fi
+          cp "$RUNNER_TEMP/docker-run/out/qc_figure.png" artifacts/qc-case-01.png 2>/dev/null || true
+          exit $code
+
+      - name: Validate manifest and provenance with contracts/validate.py
+        run: python "$STEP_CONTRACTS_DIR/validate.py" step/step.yaml artifacts/provenance-case-01.json
+
+      - uses: actions/upload-artifact@v4.6.0
+        if: always()
+        with:
+          name: step-artifacts
+          path: artifacts/
+          if-no-files-found: warn
