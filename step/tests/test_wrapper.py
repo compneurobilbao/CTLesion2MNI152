@@ -115,8 +115,7 @@ def test_wrapper_checks_fsl_exit_codes_without_changing_the_package(tmp_path, mo
 
 def test_package_keeps_its_original_subprocess_call():
     src = (STEP_DIR.parent / "src" / "ct_lesion_to_mni152" / "registration_workflow.py").read_text()
-    assert "from subprocess import call
-" in src
+    assert "from subprocess import call\n" in src.replace("\r\n", "\n")
 
 
 def test_manifest_valid():
