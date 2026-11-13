@@ -1,5 +1,5 @@
 import os
-from subprocess import call
+from subprocess import check_call as call  # non-zero exit of any FSL command raises CalledProcessError
 import sys
 import argparse
 import numpy as np
