@@ -124,7 +124,14 @@ reference_test:
     age_band: null
   expected:
     lesion_mask_mni:
-      compare: exists
+      # Regression floor, NOT an accuracy claim. Measured on this case: Dice 0.465, centroid error
+      # 2.3 mm (Docker and Apptainer give byte-identical masks); the plan's starting target of
+      # 0.6 is not met because the workflow's B-spline stage shrinks the lesion (about 12900 voxels
+      # after the affine stage, 3703 after it, at 1 mm). Frozen at measured minus a margin; raising
+      # it needs a change of the algorithm or of the data, loosening it is a minor version change.
+      compare: dice
+      file: tests/reference/lesion_mask_mni.nii.gz
+      min: 0.40
     ct_mni:
       compare: exists
     qc_figure:
