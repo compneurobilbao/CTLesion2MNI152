@@ -202,6 +202,10 @@ def run(ctx: StepContext) -> None:
     ct_arr = load_on_grid(work / "ct_MNI152.nii.gz", grid1, "registered CT", ctx, 1)
     mask_f = load_on_grid(work / "lesion_mask_MNI152.nii.gz", grid1, "registered mask", ctx, 0)
     mask_1mm = mask_f >= 0.5
+    ctx.log.info(
+        "workflow mask on the 1 mm grid: max %.3f, %d voxels > 0, %d voxels >= 0.5",
+        float(mask_f.max()), int((mask_f > 0).sum()), int(mask_1mm.sum()),
+    )
 
     from ct_lesion_to_mni152 import data as ctdata
 
