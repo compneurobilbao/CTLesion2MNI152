@@ -3,3 +3,4 @@
 .vscode
 .venv
 ./data
+step/tests/reference/
