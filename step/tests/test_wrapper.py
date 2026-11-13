@@ -95,10 +95,28 @@ def test_failed_cluster_with_no_skull_is_qc_failure(tmp_path, monkeypatch):
     assert e.value.code == "skull_not_found"
 
 
-def test_package_checks_every_subprocess_exit_code():
+def test_wrapper_checks_fsl_exit_codes_without_changing_the_package(tmp_path, monkeypatch):
+    seen = {}
+    mod = types.ModuleType("ct_lesion_to_mni152.registration_workflow")
+    mod.call = subprocess.call
+
+    def register():
+        seen["call"] = mod.call
+
+    mod.register_ct_and_lesion_to_mni152 = register
+    pkg = types.ModuleType("ct_lesion_to_mni152")
+    pkg.registration_workflow = mod
+    monkeypatch.setitem(sys.modules, "ct_lesion_to_mni152", pkg)
+    monkeypatch.setitem(sys.modules, "ct_lesion_to_mni152.registration_workflow", mod)
+    step.run_workflow(tmp_path / "ct.nii.gz", tmp_path / "m.nii.gz", tmp_path)
+    assert seen["call"] is subprocess.check_call
+    assert mod.call is subprocess.call
+
+
+def test_package_keeps_its_original_subprocess_call():
     src = (STEP_DIR.parent / "src" / "ct_lesion_to_mni152" / "registration_workflow.py").read_text()
-    assert "from subprocess import check_call as call" in src
-    assert "subprocess.call" not in src
+    assert "from subprocess import call
+" in src
 
 
 def test_manifest_valid():

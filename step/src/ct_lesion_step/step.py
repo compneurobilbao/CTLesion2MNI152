@@ -87,6 +87,11 @@ def run_workflow(ct_path: Path, mask_path: Path, work: Path) -> None:
 
     argv = sys.argv
     sys.argv = ["ct_lesion_to_mni152", "-p", str(ct_path), "-o", str(work), "-l", str(mask_path)]
+    # The package runs its FSL commands with subprocess.call and ignores their exit codes.
+    # Inside the step only, swap in check_call so that a failing command stops the run;
+    # the package itself is left unchanged.
+    package_call = wf.call
+    wf.call = subprocess.check_call
     try:
         wf.register_ct_and_lesion_to_mni152()
     except subprocess.CalledProcessError as exc:
@@ -105,6 +110,7 @@ def run_workflow(ct_path: Path, mask_path: Path, work: Path) -> None:
             raise QcFailed("skull_not_found", SKULL_MSG, port="ct") from exc
         raise
     finally:
+        wf.call = package_call
         sys.argv = argv
     if _skull_missing(work):
         raise QcFailed("skull_not_found", SKULL_MSG, port="ct")
