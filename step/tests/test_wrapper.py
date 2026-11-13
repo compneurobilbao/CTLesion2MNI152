@@ -68,6 +68,7 @@ def test_input_checks(tmp_path):
 
 def _fake_workflow(monkeypatch, exc):
     mod = types.ModuleType("ct_lesion_to_mni152.registration_workflow")
+    mod.call = subprocess.call
 
     def fail():
         raise exc
