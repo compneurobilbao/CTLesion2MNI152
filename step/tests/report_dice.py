@@ -36,6 +36,7 @@ if __name__ == "__main__":
                 "voxels_truth": int((b > 0).sum()),
                 "centroid_mm_out": centroid_mm(out),
                 "centroid_mm_truth": centroid_mm(truth),
+                "centroid_error_mm": round(float(np.linalg.norm(np.array(centroid_mm(out)) - np.array(centroid_mm(truth)))), 2),
             }
         )
     )

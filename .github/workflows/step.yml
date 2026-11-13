@@ -22,6 +22,8 @@ concurrency:
 
 env:
   IMAGE: ct-lesion-to-mni152-step:ci
+  APPTAINER_VERSION: "1.5.5"
+  APPTAINER_DEB_SHA256: "25095d3711504b3e8657dbb2e172ef8db9db43c4503d940c9c36b105db8dce77"
 
 jobs:
   unit:
@@ -62,10 +64,19 @@ jobs:
           pip install numpy==1.26.4 nibabel==5.2.1 PyYAML==6.0.2 jsonschema==4.23.0
           pip install --no-deps "$RUNNER_TEMP/pinned/steps/sdk"
           echo "STEP_CONTRACTS_DIR=$RUNNER_TEMP/pinned/contracts" >> "$GITHUB_ENV"
-      - name: Build the reference dataset (fixture generator, case-01 on a 1 mm native grid)
+      - name: Cache the public CT template files (pinned, SHA-256 verified on every run)
+        uses: actions/cache@v4.2.0
+        with:
+          path: ${{ runner.temp }}/refdata
+          key: ct-template-${{ hashFiles('step/ci/fetch_reference_data.sh') }}
+      - name: Download the public CT template (pinned URL and SHA-256)
+        run: step/ci/fetch_reference_data.sh "$RUNNER_TEMP/refdata"
+      - name: Build the reference case (known random affine + smooth deformation, MNI lesion)
         run: |
           pip install scipy==1.13.1
-          python step/ci/make_reference.py "$RUNNER_TEMP/pinned" step/tests/reference
+          cp src/ct_lesion_to_mni152/data/ct_in_MNI152.nii.gz "$RUNNER_TEMP/refdata/"
+          python step/ci/make_reference.py "$RUNNER_TEMP/refdata" "$RUNNER_TEMP/pinned" step/tests/reference
+          mkdir -p artifacts && cp step/tests/reference/source_info.json artifacts/reference-source-info.json
 
       - name: Build the step image
         run: docker build -f step/Dockerfile --build-arg STROKE_SERVER_SHA="$(cat step/ci/STROKE_SERVER_SHA)" -t "$IMAGE" .
@@ -137,6 +148,28 @@ jobs:
           python "$STEP_CONTRACTS_DIR/validate.py" step/step.yaml "$work/out/provenance.json"
           python step/tests/report_dice.py "$work/out" step/tests/reference/lesion_mask_mni.nii.gz | tee artifacts/dice-case-01-age-65-69.json
           cp "$work/out/provenance.json" artifacts/provenance-case-01-age-65-69.json
+
+      - name: Install Apptainer (official release package)
+        run: |
+          deb="apptainer_${APPTAINER_VERSION}_amd64.deb"
+          curl -sSfL -o "$RUNNER_TEMP/$deb" "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/${deb}"
+          echo "${APPTAINER_DEB_SHA256}  $RUNNER_TEMP/$deb" | sha256sum -c -
+          sudo apt-get update -q
+          sudo apt-get install -y -q "$RUNNER_TEMP/$deb"
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          apptainer --version
+
+      - name: Build the SIF from the Docker image
+        run: |
+          sudo apptainer build --build-arg IMAGE="$IMAGE" "$RUNNER_TEMP/step.sif" step/Apptainer.def
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/step.sif"
+
+      - name: Reference test under Apptainer (--containall --cleanenv --no-home)
+        run: |
+          stroke-step-reftest --step-dir step --mode apptainer --sif "$RUNNER_TEMP/step.sif"             --workdir "$RUNNER_TEMP/apptainer-run" --save-provenance artifacts/provenance-apptainer.json
+          python "$STEP_CONTRACTS_DIR/validate.py" step/step.yaml artifacts/provenance-apptainer.json
+          python step/tests/report_dice.py "$RUNNER_TEMP/apptainer-run/out" step/tests/reference/lesion_mask_mni.nii.gz | tee artifacts/dice-case-01-apptainer.json
+          cmp "$RUNNER_TEMP/docker-run/out/lesion_mask_mni.nii.gz" "$RUNNER_TEMP/apptainer-run/out/lesion_mask_mni.nii.gz"             && echo "lesion masks identical between Docker and Apptainer"             || echo "NOTE: lesion masks differ between Docker and Apptainer (see Dice files)"
 
       - uses: actions/upload-artifact@v4.6.0
         if: always()
