@@ -98,6 +98,12 @@ def run_workflow(ct_path: Path, mask_path: Path, work: Path) -> None:
             "An FSL command of the registration workflow failed.",
             details={"command": cmd, "exit_code": int(exc.returncode)},
         ) from exc
+    except Exception as exc:
+        # fsl-cluster exits 0 when no cluster is big enough; the workflow then continues with an
+        # empty skull image and fails later (typically inside elastix). Name the real cause.
+        if _skull_missing(work):
+            raise QcFailed("skull_not_found", SKULL_MSG, port="ct") from exc
+        raise
     finally:
         sys.argv = argv
     if _skull_missing(work):

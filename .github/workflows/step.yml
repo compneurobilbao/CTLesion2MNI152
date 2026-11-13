@@ -62,8 +62,10 @@ jobs:
           pip install numpy==1.26.4 nibabel==5.2.1 PyYAML==6.0.2 jsonschema==4.23.0
           pip install --no-deps "$RUNNER_TEMP/pinned/steps/sdk"
           echo "STEP_CONTRACTS_DIR=$RUNNER_TEMP/pinned/contracts" >> "$GITHUB_ENV"
-      - name: Stage the reference dataset (fixture case-01)
-        run: step/ci/stage_reference.sh "$RUNNER_TEMP/pinned" case-01
+      - name: Build the reference dataset (fixture generator, case-01 on a 1 mm native grid)
+        run: |
+          pip install scipy==1.13.1
+          python step/ci/make_reference.py "$RUNNER_TEMP/pinned" step/tests/reference
 
       - name: Build the step image
         run: docker build -f step/Dockerfile --build-arg STROKE_SERVER_SHA="$(cat step/ci/STROKE_SERVER_SHA)" -t "$IMAGE" .
@@ -79,7 +81,7 @@ jobs:
           '
           docker run --rm --entrypoint cat "$IMAGE" /opt/step/step.yaml | cmp - step/step.yaml
 
-      - name: Reference test (fixture case-01, contract section 6 flags)
+      - name: Reference test (contract section 6 flags)
         id: reftest
         run: |
           mkdir -p artifacts
@@ -99,6 +101,37 @@ jobs:
 
       - name: Validate manifest and provenance with contracts/validate.py
         run: python "$STEP_CONTRACTS_DIR/validate.py" step/step.yaml artifacts/provenance-case-01.json
+
+      - name: Committed-size fixture (2.5 x 2.5 x 3 mm) is rejected with skull_not_found (exit 10)
+        run: |
+          work="$RUNNER_TEMP/lowres"
+          mkdir -p "$work/in" "$work/out"
+          chmod 777 "$work/out"
+          cp "$RUNNER_TEMP/pinned/fixtures/data/cases/case-01/ct.nii.gz" "$work/in/ct.nii.gz"
+          cp "$RUNNER_TEMP/pinned/fixtures/data/cases/case-01/lesion_mask_native.nii.gz" "$work/in/lesion_mask.nii.gz"
+          echo '{"age_band": null, "mask_threshold": 0.5}' > "$work/in/params.json"
+          set +e
+          docker run --rm --read-only --user 12345:12345 --cap-drop ALL             --security-opt no-new-privileges --network none --tmpfs /tmp:rw,mode=1777,size=2g             -v "$work/in:/in:ro" -v "$work/out:/out" -e HOME=/tmp -e TMPDIR=/tmp -e TZ=UTC             -e STEP_CPUS=2 --entrypoint /usr/local/bin/run "$IMAGE"             --in /in --out /out --params /in/params.json
+          code=$?
+          set -e
+          echo "exit code: $code"
+          cat "$work/out/error.json"
+          test "$code" -eq 10
+          grep -q '"code": *"skull_not_found"' "$work/out/error.json"
+          python "$STEP_CONTRACTS_DIR/validate.py" step/step.yaml "$work/out/provenance.json" "$work/out/error.json"
+
+      - name: Ventricle removal run (age band 65-69) on the reference case
+        run: |
+          work="$RUNNER_TEMP/vent"
+          mkdir -p "$work/in" "$work/out"
+          chmod 777 "$work/out"
+          cp step/tests/reference/ct.nii.gz "$work/in/ct.nii.gz"
+          cp step/tests/reference/lesion_mask_native.nii.gz "$work/in/lesion_mask.nii.gz"
+          echo '{"age_band": "65-69", "mask_threshold": 0.5}' > "$work/in/params.json"
+          docker run --rm --read-only --user 12345:12345 --cap-drop ALL             --security-opt no-new-privileges --network none --tmpfs /tmp:rw,mode=1777,size=2g             -v "$work/in:/in:ro" -v "$work/out:/out" -e HOME=/tmp -e TMPDIR=/tmp -e TZ=UTC             -e STEP_CPUS=2 --entrypoint /usr/local/bin/run "$IMAGE"             --in /in --out /out --params /in/params.json
+          python "$STEP_CONTRACTS_DIR/validate.py" step/step.yaml "$work/out/provenance.json"
+          python step/tests/report_dice.py "$work/out" step/tests/reference/lesion_mask_mni.nii.gz | tee artifacts/dice-case-01-age-65-69.json
+          cp "$work/out/provenance.json" artifacts/provenance-case-01-age-65-69.json
 
       - uses: actions/upload-artifact@v4.6.0
         if: always()

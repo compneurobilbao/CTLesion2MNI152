@@ -9,6 +9,6 @@ sha="$(tr -d '[:space:]' < "$here/STROKE_SERVER_SHA")"
 dest="${1:?usage: fetch_pinned.sh DEST}"
 mkdir -p "$dest"
 curl -fsSL "https://codeload.github.com/compneurobilbao/stroke-server-biobizkaia/tar.gz/${sha}" \
-  | tar -xz -C "$dest" --strip-components=1 --wildcards '*/contracts' '*/steps/sdk' '*/fixtures/data/cases' '*/fixtures/LICENCES.md'
+  | tar -xz -C "$dest" --strip-components=1 --wildcards '*/contracts' '*/steps/sdk' '*/fixtures'
 test -f "$dest/contracts/validate.py" && test -f "$dest/steps/sdk/pyproject.toml"
 echo "fetched stroke-server ${sha} into ${dest}"
