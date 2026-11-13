@@ -18,8 +18,24 @@ def dice(a: np.ndarray, b: np.ndarray) -> float:
     return 1.0 if total == 0 else 2.0 * int((a & b).sum()) / total
 
 
+def centroid_mm(img: nib.Nifti1Image) -> list:
+    idx = np.argwhere(np.asanyarray(img.dataobj) > 0)
+    return [round(float(v), 1) for v in nib.affines.apply_affine(img.affine, idx.mean(axis=0))]
+
+
 if __name__ == "__main__":
     out = nib.load(str(Path(sys.argv[1]) / "lesion_mask_mni.nii.gz"))
     truth = nib.load(sys.argv[2])
     a, b = np.asanyarray(out.dataobj), np.asanyarray(truth.dataobj)
-    print(json.dumps({"dice": round(dice(a, b), 4), "voxels_out": int((a > 0).sum()), "voxels_truth": int((b > 0).sum())}))
+    print(
+        json.dumps(
+            {
+                "dice": round(dice(a, b), 4),
+                "dice_if_left_right_mirrored": round(dice(a[::-1], b), 4),
+                "voxels_out": int((a > 0).sum()),
+                "voxels_truth": int((b > 0).sum()),
+                "centroid_mm_out": centroid_mm(out),
+                "centroid_mm_truth": centroid_mm(truth),
+            }
+        )
+    )

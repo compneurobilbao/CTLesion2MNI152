@@ -95,6 +95,11 @@ jobs:
           cp "$RUNNER_TEMP/docker-run/out/error.json" artifacts/error-case-01.json 2>/dev/null || true
           if [ -f "$RUNNER_TEMP/docker-run/out/lesion_mask_mni.nii.gz" ]; then
             python step/tests/report_dice.py "$RUNNER_TEMP/docker-run/out" step/tests/reference/lesion_mask_mni.nii.gz | tee artifacts/dice-case-01.json
+            cp "$RUNNER_TEMP/docker-run/out/lesion_mask_mni.nii.gz" artifacts/lesion_mask_mni-case-01.nii.gz
+            {
+              echo "### Dice against the fixture ground truth (reported, not gating: see step/step.yaml)"
+              echo '```json'; cat artifacts/dice-case-01.json; echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
           cp "$RUNNER_TEMP/docker-run/out/qc_figure.png" artifacts/qc-case-01.png 2>/dev/null || true
           exit $code
